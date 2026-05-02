@@ -31,7 +31,15 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+Verify plan against `.specify/memory/constitution.md`:
+
+- **I (Privacy-first)**: No developer-hosted persistence for user secrets; browser-only storage matches FR-011-class constraints.
+- **II (Official integrations)**: hh.ru and LLM approaches use documented, permitted mechanisms.
+- **III (Spec-driven)**: Plan traces to current feature spec; unexplained scope creep flagged.
+- **IV (Type-safe baseline)**: Stack includes TypeScript + ESLint + Prettier as required for this codebase.
+- **V (Reliability)**: Error boundary and non-silent failure paths for auth/polling/apply/generation are planned or explicitly deferred with rationale.
+
+**Violations**: Document in **Complexity Tracking** table with justification, or amend spec/constitution before implementation.
 
 ## Project Structure
 

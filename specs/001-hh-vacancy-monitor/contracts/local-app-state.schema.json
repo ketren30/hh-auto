@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/hh-auto/app-state",
+  "title": "HH Auto local app state (persisted)",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "schemaVersion": { "type": "integer", "minimum": 1 },
+    "pollIntervalMinutes": { "type": "integer", "minimum": 3 },
+    "soundEnabled": { "type": "boolean" },
+    "resumeText": { "type": "string" },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "baseUrl": { "type": "string", "format": "uri" },
+        "apiKey": { "type": "string" },
+        "model": { "type": "string" }
+      }
+    },
+    "subscriptionMonitoring": {
+      "type": "object",
+      "description": "Map of hh saved-search id -> enabled",
+      "additionalProperties": { "type": "boolean" }
+    }
+  },
+  "required": ["schemaVersion"]
+}

@@ -1,50 +1,51 @@
-# [PROJECT_NAME] Constitution
-<!-- Example: Spec Constitution, TaskFlow Constitution, etc. -->
+<!--
+Sync Impact Report
+Version change: (none / template) → 1.0.0 — initial ratification
+Modified principles: N/A (initial adoption)
+Added sections: Core Principles I–V; Security & privacy; Delivery workflow; Governance
+Removed sections: None (replaced placeholder template body)
+Templates: plan-template.md ✅ Constitution Check aligned; constitution-template.md ⚠ source template unchanged by design; spec-template.md ⚠ optional cross-ref only; tasks-template.md ⚠ optional cross-ref only
+Follow-ups: None
+-->
+
+# hh-auto Constitution
 
 ## Core Principles
 
-### [PRINCIPLE_1_NAME]
-<!-- Example: I. Library-First -->
-[PRINCIPLE_1_DESCRIPTION]
-<!-- Example: Every feature starts as a standalone library; Libraries must be self-contained, independently testable, documented; Clear purpose required - no organizational-only libraries -->
+### I. Privacy-first & local credentials (NON-NEGOTIABLE)
 
-### [PRINCIPLE_2_NAME]
-<!-- Example: II. CLI Interface -->
-[PRINCIPLE_2_DESCRIPTION]
-<!-- Example: Every library exposes functionality via CLI; Text in/out protocol: stdin/args → stdout, errors → stderr; Support JSON + human-readable formats -->
+User secrets—hh.ru session tokens, resume text, LLM API keys, subscription monitoring choices—MUST NOT be transmitted to or persisted on infrastructure operated by the application author except where the user explicitly invokes third parties they chose (hh.ru OAuth/API, user-configured LLM HTTPS endpoint). Client-side storage MUST be the default; document any exception in spec/plan before implementation.
 
-### [PRINCIPLE_3_NAME]
-<!-- Example: III. Test-First (NON-NEGOTIABLE) -->
-[PRINCIPLE_3_DESCRIPTION]
-<!-- Example: TDD mandatory: Tests written → User approved → Tests fail → Then implement; Red-Green-Refactor cycle strictly enforced -->
+### II. Official integrations only
 
-### [PRINCIPLE_4_NAME]
-<!-- Example: IV. Integration Testing -->
-[PRINCIPLE_4_DESCRIPTION]
-<!-- Example: Focus areas requiring integration tests: New library contract tests, Contract changes, Inter-service communication, Shared schemas -->
+All hh.ru access MUST use mechanisms documented and permitted by hh for applicant/developer use (OAuth, published APIs, registration rules). Scraping or circumventing official APIs is forbidden. LLM usage MUST respect provider terms and user-supplied configuration only.
 
-### [PRINCIPLE_5_NAME]
-<!-- Example: V. Observability, VI. Versioning & Breaking Changes, VII. Simplicity -->
-[PRINCIPLE_5_DESCRIPTION]
-<!-- Example: Text I/O ensures debuggability; Structured logging required; Or: MAJOR.MINOR.BUILD format; Or: Start simple, YAGNI principles -->
+### III. Spec-driven delivery
 
-## [SECTION_2_NAME]
-<!-- Example: Additional Constraints, Security Requirements, Performance Standards, etc. -->
+Material behavior changes start from or update `specs/<feature>/spec.md`, then `plan.md` / `tasks.md` as appropriate. Merging implementation that contradicts an approved spec without updating the spec first is forbidden unless explicitly labeled a time-boxed spike and reconciled immediately after.
 
-[SECTION_2_CONTENT]
-<!-- Example: Technology stack requirements, compliance standards, deployment policies, etc. -->
+### IV. Type-safe baseline & consistent style
 
-## [SECTION_3_NAME]
-<!-- Example: Development Workflow, Review Process, Quality Gates, etc. -->
+Application code MUST use TypeScript with strict checking enabled. ESLint and Prettier MUST run clean on changed files before merge (or CI equivalent once introduced). New dependencies MUST serve a clear requirement from spec/plan—avoid speculative libraries.
 
-[SECTION_3_CONTENT]
-<!-- Example: Code review requirements, testing gates, deployment approval process, etc. -->
+### V. User-visible reliability
+
+Critical UI MUST NOT fail silently for recoverable errors in auth, polling, apply, or generation flows. The SPA MUST include a top-level **React error boundary** so unexpected render errors surface a safe fallback UI instead of a blank screen. User-facing messages MUST NOT embed secrets (tokens, keys).
+
+## Security & privacy standards
+
+- Treat browser storage as sensitive: minimize retention of access tokens; prefer short-lived session patterns where hh allows.
+- Never log raw OAuth codes, access tokens, refresh tokens, or LLM keys.
+- Document integration endpoints and scopes in `docs/hh-api-notes.md` (or successor) when touching `hhClient`.
+
+## Delivery workflow & quality gates
+
+- Feature branches follow Spec Kit conventions (`NNN-short-name` or timestamped per project config).
+- Constitution checks in `plan.md` MUST be satisfied or explicitly justified before Phase 0 research proceeds.
+- README / quickstart MUST remain accurate enough for a new contributor to run OAuth registration and local dev.
 
 ## Governance
-<!-- Example: Constitution supersedes all other practices; Amendments require documentation, approval, migration plan -->
 
-[GOVERNANCE_RULES]
-<!-- Example: All PRs/reviews must verify compliance; Complexity must be justified; Use [GUIDANCE_FILE] for runtime development guidance -->
+This constitution supersedes ad-hoc conventions when they conflict. Amendments: propose change in a PR that edits `.specify/memory/constitution.md`, bumps **semantic version** (MAJOR for incompatible principle removal/redefinition; MINOR for new principles or expanded MUST rules; PATCH for clarifications), updates **Last Amended**, and summarizes impact in the Sync Impact Report HTML comment at the top of this file. Ratification date is unchanged unless governance structure changes (then record in report). Every non-trivial PR SHOULD note which principles remain satisfied.
 
-**Version**: [CONSTITUTION_VERSION] | **Ratified**: [RATIFICATION_DATE] | **Last Amended**: [LAST_AMENDED_DATE]
-<!-- Example: Version: 2.1.1 | Ratified: 2025-06-13 | Last Amended: 2025-07-16 -->
+**Version**: 1.0.0 | **Ratified**: 2026-05-01 | **Last Amended**: 2026-05-01
