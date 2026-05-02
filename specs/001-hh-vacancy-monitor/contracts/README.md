@@ -12,6 +12,7 @@ Interfaces this SPA relies on or exposes.
 ## Internal persistence
 
 - [local-app-state.schema.json](./local-app-state.schema.json) — canonical JSON blob shape for `localStorage` key(s) (implementation may split keys).
+- [search-journal-format.md](./search-journal-format.md) — Markdown table columns and export conventions for per-profile vacancy journals (FR-016 / FR-017).
 
 ## Environment
 

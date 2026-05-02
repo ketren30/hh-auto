@@ -34,7 +34,7 @@ export function ApplyConfirmDialog({
           vacancyId: vacancy.id,
           status: 'failure',
           message:
-            'Не найдено резюме на hh.ru. Создайте резюме в кабинете соискателя или проверьте доступ API.',
+            'Не найдено резюме для отклика: список через API пуст или недоступен. Задайте в .env ссылку VITE_HH_RESUME_URL (страница резюме на hh.ru) или проверьте доступ к GET /resumes/mine.',
         });
         onClose();
         return;

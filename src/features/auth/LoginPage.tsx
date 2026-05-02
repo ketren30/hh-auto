@@ -48,7 +48,9 @@ export function LoginPage() {
       ) : (
         <>
           <p style={{ color: '#9aa0a6', marginBottom: 16 }}>
-            Используется OAuth с PKCE. Перенаправление на hh.ru.
+            Используется OAuth с PKCE. Перенаправление на hh.ru. Запрашивается роль{' '}
+            <strong>соискателя</strong> (<code>role=applicant</code>): если вы были в аккаунте работодателя,
+            hh предложит войти как соискатель.
           </p>
           <p style={{ fontSize: 13, color: '#9aa0a6', marginBottom: 16 }}>
             Если redirect URI в кабинете hh уже задан и его нельзя поменять — скопируйте его в{' '}

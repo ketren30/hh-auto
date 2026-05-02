@@ -1,6 +1,11 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import basicSsl from '@vitejs/plugin-basic-ssl';
 import react from '@vitejs/plugin-react';
 import { defineConfig, loadEnv } from 'vite';
+
+/** Каталог приложения (рядом с этим конфигом) — чтобы `.env` подхватывался даже если `npm run dev` запущен из родительской папки. */
+const appRoot = path.dirname(fileURLToPath(import.meta.url));
 
 /** Если redirect в кабинете hh задан как https://localhost:3000 — dev-сервер должен слушать HTTPS. */
 function devHttpsFromOAuthRedirect(env: Record<string, string>): boolean {
@@ -19,10 +24,30 @@ function body(req: { on: (ev: string, fn: (...args: unknown[]) => void) => void 
   });
 }
 
+function stripEnvQuotes(s: string): string {
+  const t = s.trim();
+  if (t.length >= 2 && ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'")))) {
+    return t.slice(1, -1).trim();
+  }
+  return t;
+}
+
+/** Совпадает с логикой клиента (hhClient): полная строка или почта для сборки. */
+function resolveHhUserAgentFromEnv(env: Record<string, string>): string | undefined {
+  const raw = (env.VITE_HH_USER_AGENT ?? env['VITE_HH_USER-AGENT'])?.trim();
+  if (raw) return stripEnvQuotes(raw);
+  const mail = env.VITE_HH_CONTACT_EMAIL?.trim();
+  if (mail) return `hh-auto/1.0 (${stripEnvQuotes(mail)})`;
+  return undefined;
+}
+
 /** Прокси на api.hh.ru — REST без CORS из браузера при локальной разработке. */
-function attachHhApiProxy(middlewares: {
-  use: (fn: (req: unknown, res: unknown, next: () => void) => void) => void;
-}) {
+function attachHhApiProxy(
+  middlewares: {
+    use: (fn: (req: unknown, res: unknown, next: () => void) => void) => void;
+  },
+  env: Record<string, string>,
+) {
   middlewares.use(async (req, res, next) => {
     const request = req as {
       url?: string;
@@ -47,7 +72,7 @@ function attachHhApiProxy(middlewares: {
     const rest = pathname.slice(prefix.length);
     const q = rawUrl.includes('?') ? `?${rawUrl.split('?').slice(1).join('?')}` : '';
     const pathOnApi = rest.length > 0 ? rest : '/';
-    const target = `https://api.hh.ru${pathOnApi}${q}`;
+      const target = `https://api.hh.ru${pathOnApi}${q}`;
 
     try {
       let payload: string | undefined;
@@ -60,8 +85,19 @@ function attachHhApiProxy(middlewares: {
       const h = request.headers;
       const auth = h.authorization;
       if (auth) headers.Authorization = Array.isArray(auth) ? auth[0] : auth;
-      const hhUa = h['hh-user-agent'];
-      if (hhUa) headers['HH-User-Agent'] = Array.isArray(hhUa) ? hhUa[0] : hhUa;
+
+      const hhUaRaw = h['hh-user-agent'];
+      const hhUaFromBrowser = hhUaRaw
+        ? (Array.isArray(hhUaRaw) ? hhUaRaw[0] : hhUaRaw).trim()
+        : '';
+      // Как в Postman: надёжнее брать строку из .env (сервер), браузерский hop всё равно не может подменить User-Agent.
+      const uaFromEnv = resolveHhUserAgentFromEnv(env);
+      const ua = uaFromEnv || hhUaFromBrowser;
+      if (ua) {
+        headers['HH-User-Agent'] = ua;
+        headers['User-Agent'] = ua;
+      }
+
       const accept = h.accept;
       if (accept) headers.Accept = Array.isArray(accept) ? accept[0] : accept;
       const ct = h['content-type'];
@@ -76,6 +112,8 @@ function attachHhApiProxy(middlewares: {
       const text = await r.text();
       const ctOut = r.headers.get('content-type');
       if (ctOut) response.setHeader('Content-Type', ctOut);
+      // В DevTools на запросе к localhost в колонке User-Agent всегда браузер — смотрите этот заголовок ответа: что реально ушло на api.hh.ru.
+      if (ua) response.setHeader('X-Hh-Dev-Upstream-User-Agent', ua.slice(0, 500));
       response.statusCode = r.status;
       response.end(text);
     } catch (e) {
@@ -150,10 +188,12 @@ function attachYandexLlmProxy(middlewares: {
 }
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), '');
+  const env = loadEnv(mode, appRoot, '');
   const https = devHttpsFromOAuthRedirect(env);
 
   return {
+    root: appRoot,
+    envDir: appRoot,
     server: {
       port: 3000,
       https,
@@ -188,9 +228,18 @@ export default defineConfig(({ mode }) => {
               const params = new URLSearchParams(raw);
               params.set('client_secret', secret);
 
+              const ua = resolveHhUserAgentFromEnv(env);
+              const tokenHeaders: Record<string, string> = {
+                'Content-Type': 'application/x-www-form-urlencoded',
+              };
+              if (ua) {
+                tokenHeaders['HH-User-Agent'] = ua;
+                tokenHeaders['User-Agent'] = ua;
+              }
+
               const r = await fetch('https://hh.ru/oauth/token', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: tokenHeaders,
                 body: params.toString(),
               });
 
@@ -210,10 +259,10 @@ export default defineConfig(({ mode }) => {
       {
         name: 'hh-api-proxy',
         configureServer(server) {
-          attachHhApiProxy(server.middlewares);
+          attachHhApiProxy(server.middlewares, env);
         },
         configurePreviewServer(server) {
-          attachHhApiProxy(server.middlewares);
+          attachHhApiProxy(server.middlewares, env);
         },
       },
       {

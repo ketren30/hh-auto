@@ -1,7 +1,8 @@
-# Specification Quality Checklist: Мониторинг подписок hh.ru и черновики писем
+# Specification Quality Checklist: Мониторинг вакансий hh.ru (фильтры, журналы, черновики)
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning  
 **Created**: 2026-05-01  
+**Updated**: 2026-05-01 — переход на профили поиска и Markdown-журналы  
 **Feature**: [spec.md](../spec.md)
 
 ## Content Quality
@@ -34,6 +35,10 @@
 - Initial review: spec describes capabilities (auth, subscriptions, polling, drafts, editable fields, sound) without naming stacks; hh.ru and «API» framed as official access assumptions.
 - FR-006 embeds the user’s letter structure as content rules, not as implementation.
 - SC-003 and SC-006 use measurable review/survey thresholds; SC-003 references FR-006 for consistency checks.
+
+## Validation Notes (2026-05-01 revision)
+
+- Spec pivots from hh «subscriptions» to **user-defined search profiles** + **Markdown journals**; checklist items remain valid at requirement level. Implementation artifacts: [contracts/search-journal-format.md](../contracts/search-journal-format.md), Phase 7 in [tasks.md](../tasks.md).
 
 ## Notes
 

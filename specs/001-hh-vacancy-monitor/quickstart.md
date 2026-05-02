@@ -43,7 +43,7 @@ npm install @reduxjs/toolkit react-redux
 npm run dev
 ```
 
-Open the printed localhost URL, complete hh login via OAuth redirect flow, enable subscriptions, set poll interval, and verify polling + draft generation against sandbox/test credentials.
+Open the printed localhost URL, complete hh login via OAuth redirect flow, **create vacancy search profiles** (filters + exclusions), enable monitoring per profile, set poll interval, and verify polling + Markdown journal updates + draft generation against sandbox/test credentials. Legacy **saved-search subscription** UI may still exist until migration tasks complete — see [spec.md](./spec.md) revision.
 
 ## References
 

@@ -54,3 +54,16 @@
 **Decision**: **Vitest + Testing Library** aligned with Vite.
 
 **Rationale**: Fast DX; consistent with chosen bundler.
+
+## 7. Saved searches vs vacancy search (`GET /vacancies`)
+
+**Decision**: Baseline product uses **user-defined filter profiles** mapped to **official vacancy search** (`GET /vacancies` with documented query parameters such as `text`, `experience`, `employment`, `schedule`, `area`, etc.). **Saved searches** (`/saved_searches/...`) are **not assumed** — they may require a paid API tier or be unavailable for the registered OAuth app.
+
+**Rationale**: Matches revised [spec.md](./spec.md) when subscriptions endpoint is blocked; search remains generally available to applicant tokens within documented limits.
+
+**Alternatives considered**:
+
+- **Server-side scraper** — violates ToS / brittle; rejected.
+- **Mandatory saved searches only** — rejected after operational constraint.
+
+**Follow-ups**: Lock parameter names and allowed values to current hh OpenAPI; document exact mapping profile-field → query string in `docs/hh-api-notes.md` during implementation.

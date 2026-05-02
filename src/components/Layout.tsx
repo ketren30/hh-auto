@@ -1,4 +1,8 @@
 import { Link, Outlet } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { ErrorBanner } from './ErrorBanner';
+import { fetchMeAuthSummary } from '../services/hhClient';
+import { useAuth } from '../features/auth/AuthProvider';
 
 const navLink = {
   color: '#e8eaed',
@@ -8,6 +12,32 @@ const navLink = {
 } as const;
 
 export function Layout() {
+  const { session } = useAuth();
+  const [applicantWarn, setApplicantWarn] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!session.accessToken) {
+      setApplicantWarn(null);
+      return;
+    }
+    fetchMeAuthSummary(session.accessToken).then((me) => {
+      if (!me) return;
+      if (me.isEmployer || me.authType === 'employer') {
+        setApplicantWarn(
+          `Сейчас выдан токен работодателя (auth_type=${me.authType ?? 'employer'}). Для подписок и резюме через API нужен соискатель — нажмите «Выйти» ниже, затем войдите снова и пройдите вход именно как соискатель (на hh.ru при запросе приложения выберите роль соискателя).`,
+        );
+        return;
+      }
+      if (!me.isApplicant && me.authType && me.authType !== 'application') {
+        setApplicantWarn(
+          `Токен не соискателя (auth_type=${me.authType}). Автопоиски и «мои резюме» могут отвечать 403 — выйдите и войдите снова с ролью applicant.`,
+        );
+        return;
+      }
+      setApplicantWarn(null);
+    });
+  }, [session.accessToken]);
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <header
@@ -46,6 +76,11 @@ export function Layout() {
         </nav>
       </header>
       <main style={{ flex: 1, padding: '20px', maxWidth: 960, width: '100%', margin: '0 auto' }}>
+        {applicantWarn ? (
+          <div style={{ marginBottom: 16 }}>
+            <ErrorBanner message={applicantWarn} />
+          </div>
+        ) : null}
         <Outlet />
       </main>
     </div>

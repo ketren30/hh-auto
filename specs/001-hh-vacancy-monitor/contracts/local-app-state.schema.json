@@ -21,8 +21,41 @@
     },
     "subscriptionMonitoring": {
       "type": "object",
-      "description": "Map of hh saved-search id -> enabled",
+      "description": "Legacy: hh saved-search id -> enabled (optional after migration to vacancySearchProfiles)",
       "additionalProperties": { "type": "boolean" }
+    },
+    "vacancySearchProfiles": {
+      "type": "array",
+      "description": "User-defined vacancy search filters — primary monitoring source per revised spec",
+      "items": {
+        "type": "object",
+        "required": ["id", "text"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "displayName": { "type": "string" },
+          "text": { "type": "string" },
+          "experience": { "type": "string" },
+          "employment": { "type": "string" },
+          "schedule": { "type": "string" },
+          "areaId": { "type": "string" },
+          "excludePhrases": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "monitoringEnabled": { "type": "boolean" }
+        }
+      }
+    },
+    "searchMonitoring": {
+      "type": "object",
+      "description": "Optional map profileId -> enabled if monitoringEnabled not stored on each profile",
+      "additionalProperties": { "type": "boolean" }
+    },
+    "searchJournalMarkdownByProfileId": {
+      "type": "object",
+      "description": "Markdown journal body per VacancySearchProfile.id (see contracts/search-journal-format.md)",
+      "additionalProperties": { "type": "string" }
     }
   },
   "required": ["schemaVersion"]

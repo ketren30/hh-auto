@@ -1,5 +1,6 @@
 ---
 description: "Task list — hh.ru vacancy monitor & cover letters"
+hh_auto_spec_revision: "2026-05-01 — manual search profiles + Markdown journals per spec.md"
 ---
 
 # Tasks: hh.ru vacancy monitor & cover letters
@@ -7,9 +8,11 @@ description: "Task list — hh.ru vacancy monitor & cover letters"
 **Input**: Design documents from `/specs/001-hh-vacancy-monitor/`  
 **Prerequisites**: [plan.md](./plan.md), [spec.md](./spec.md), [research.md](./research.md), [data-model.md](./data-model.md), [contracts/](./contracts/)
 
+**Spec revision**: После **2026-05-01** канонический поток — **профили поиска** (`GET /vacancies`) и **Markdown-журнал** на профиль ([search-journal-format.md](./contracts/search-journal-format.md)). Задачи Phase 3–4 с подписками hh.ru считаются **legacy-реализацией** до миграции (Phase 7).
+
 **Tests**: Not requested in spec — **no dedicated test tasks**. Vitest can be wired in Polish if desired.
 
-**Organization**: Phases follow user stories P1 → P2 → P3 from spec; paths match [plan.md](./plan.md) single SPA layout.
+**Organization**: Phases follow user stories P1 → P2 → P3 from spec; **Phase 7** — отдельная волна под пересмотр 2026-05-01; paths match [plan.md](./plan.md) single SPA layout.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -120,6 +123,30 @@ Single project at repo root: `src/`, `public/`, `tests/` (optional later).
 
 ---
 
+## Phase 7: Spec revision — профили поиска и Markdown-журналы *(queued — не реализовано)*
+
+**Purpose**: Привести код к пересмотренному [spec.md](./spec.md): несколько пользовательских поисков по фильтрам, параллельный мониторинг, один Markdown-журнал на профиль, экспорт `.md`.
+
+**Independent Test**: два профиля с разными параметрами; опрос обновляет два журнала; новая вакансия попадает только в журнал соответствующего профиля; успешный отклик выставляет `applied` в нужной таблице; экспорт соответствует [search-journal-format.md](./contracts/search-journal-format.md).
+
+### Implementation (queued)
+
+- [ ] T035 Расширить доменные типы и `storage.ts` под `vacancySearchProfiles`, опционально `searchMonitoring`, `searchJournalMarkdownByProfileId`; миграция с legacy `subscriptionMonitoring`
+- [ ] T036 [P] UI профилей поиска (список, создание/редактирование/удаление): текст, опыт, формат/employment/schedule, регион (`areaId`), исключения; persist (`src/features/vacancy-searches/` или рядом)
+- [ ] T037 `fetchVacanciesForSearchProfile` в `src/services/hhClient.ts`: сборка `GET /vacancies`; зафиксировать параметры в `docs/hh-api-notes.md`
+- [ ] T038 [P] Фильтр `excludePhrases` по title + snippet после выдачи
+- [ ] T039 Движок журнала: слияние строк вех, генерация `markdownBody` по контракту; сохранение в `searchJournalMarkdownByProfileId`
+- [ ] T040 Рефакторинг polling: один интервал, опрос всех включённых профилей; снимок vacancy id **на профиль**
+- [ ] T041 New vacancies: `searchProfileId` на элементе выдачи; подпись профиля в карточке; корректировка формулировки источника в промпте LLM (FR-006)
+- [ ] T042 [P] Экспорт: скачивание `hh-auto-search-<profileId>.md`
+- [ ] T043 После успешного отклика (FR-015) — обновление строки журнала и пересборка Markdown профиля
+- [ ] T044 Навигация: экран подписок hh заменить или отключить на пути «Поиски»; убрать обязательность `saved_searches` из UX
+- [ ] T045 [P] Обновить `docs/hh-api-notes.md`: основной поток через `/vacancies`, saved searches опционально
+
+**Checkpoint**: Спецификация после 2026-05-01 закрыта без серверного хранения журналов.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
@@ -132,8 +159,9 @@ Single project at repo root: `src/`, `public/`, `tests/` (optional later).
 | Phase 4 US2 | Phase 2 **and** US1 recommended (needs auth + subscriptions UI — may mock only after T010–T011 if blocked) |
 | Phase 5 US3 | Phase 2 **and** US2 recommended (needs new vacancy feed) |
 | Phase 6 Polish | All desired story phases |
+| Phase 7 Revision | Phase 2; на практике после US2+US3 или отдельная ветка с заменой координатора опроса |
 
-**Note**: US2/US3 strictly need `hhClient` + routes from Foundational; US2 logic assumes US1 session/subscription toggles exist — implement US1 before US2 for smoothest path.
+**Note**: US2/US3 strictly need `hhClient` + routes from Foundational; US2 logic assumes US1 session/subscription toggles exist — implement US1 before US2 for smoothest path. **Phase 7** заменяет подписки на профили поиска — см. примечание в начале файла.
 
 ### User Story Dependencies
 
@@ -176,25 +204,28 @@ Single project at repo root: `src/`, `public/`, `tests/` (optional later).
 
 ### MVP First (User Story 1 only)
 
-1. Phase 1 → Phase 2 → Phase 3 (US1) → **stop** and demo login + subscriptions + resume.
+1. Phase 1 → Phase 2 → Phase 3 (US1) → **stop** and demo login + subscriptions + resume (**legacy** относительно spec revision).
 
 ### Incremental Delivery
 
 1. Add Phase 4 (US2) → polling + new vacancy detection.  
 2. Add Phase 5 (US3) → drafts + sound + apply.  
-3. Phase 6 polish.
+3. Phase 6 polish.  
+4. **Phase 7** → профили поиска + Markdown-журналы (актуальный минимум по spec после 2026-05-01).
 
 ### Metrics
 
 | Metric | Value |
 |--------|-------|
-| Total tasks | 34 |
+| Total tasks (completed T001–T034) | 34 |
+| Phase 7 queued (T035–T045) | 11 |
 | Phase 1 | 5 |
 | Phase 2 | 6 |
 | US1 | 5 |
 | US2 | 5 |
 | US3 | 8 |
 | Polish | 5 |
+| Revision | 11 |
 
 ---
 
@@ -205,3 +236,4 @@ Single project at repo root: `src/`, `public/`, `tests/` (optional later).
 - Replace hh endpoint URLs and OAuth client IDs using current hh developer documentation during T010/T026.
 - Redux Toolkit **not** in task list — introduce only if Context complexity spikes (per plan); then add `src/app/store.ts` and refactor in a follow-up task outside this file.
 - FR-011: never send tokens/resume/LLM keys to a developer-controlled backend.
+- Markdown журналы и профили поиска остаются локально (FR-016–FR-017); Phase **T035–T045**.

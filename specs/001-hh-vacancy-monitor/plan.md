@@ -4,25 +4,29 @@
 
 **Input**: Feature specification from `/specs/001-hh-vacancy-monitor/spec.md`
 
-**Stack (explicit)**: React, ESLint, Prettier, React Router; Redux optional — recommended as **Redux Toolkit** only when shared async/UI state (polling, auth/session, vacancy lists) grows beyond comfortable Context scope (see [research.md](./research.md)).
+**Stack (explicit)**: React, ESLint, Prettier, React Router; Redux optional — recommended as **Redux Toolkit** only when shared async/UI state (polling, auth/session, vacancy lists, several search profiles + journals) grows beyond comfortable Context scope (see [research.md](./research.md)).
 
 ## Summary
 
-Single-page web application that lets a signed-in hh.ru user monitor selected saved searches (subscriptions), poll them on a user-defined interval while the tab stays open, detect newly appeared vacancies, generate editable cover-letter drafts via a user-configured LLM endpoint using locally stored resume text, play a sound on new items, and submit responses one vacancy at a time through hh.ru–supported mechanisms with explicit per-vacancy confirmation. No developer-hosted persistence for secrets or resume (FR-011): tokens, resume, LLM credentials, and subscription toggles live in browser storage only.
+Single-page web application that lets a signed-in hh.ru user define **one or more vacancy search profiles** (main text query, experience, employment/format, city/region, exclusion phrases), toggle **per-profile monitoring**, and poll **official vacancy search** endpoints on a user-defined interval while the tab stays open. Saved searches on hh.ru (`saved_searches`) are **not required** and may be unavailable under API tier constraints — the product baseline is **in-app filters**, not server-side subscriptions.
 
-Technical approach: **Vite + React + TypeScript** (standard toolchain with ESLint/Prettier), **React Router** for navigation (login/settings/subscriptions/new vacancies), modular **services** for hh API client and LLM client, **polling orchestration** via `setInterval`/`requestAnimationFrame` fallback patterns aware of background tab throttling. State: start with **React context + hooks**; introduce **@reduxjs/toolkit** if polling/vacancy/auth state becomes hard to reason about (see research).
+For each profile the app maintains a **Markdown journal** (table of vacancies with first-seen timestamp and apply-sent flag, format in [contracts/search-journal-format.md](./contracts/search-journal-format.md)), updatable after each successful poll and exportable as `.md`. The app detects vacancies new since the previous successful snapshot **per profile**, generates editable cover-letter drafts via a user-configured LLM using locally stored resume text, plays a sound on new items, and submits responses one vacancy at a time through hh-supported APIs with explicit confirmation.
+
+No developer-hosted persistence for secrets, resume, journals, or profiles (FR-011): tokens, resume, LLM credentials, profile definitions, monitoring toggles, poll snapshots, and Markdown journal bodies live in browser storage only.
+
+Technical approach: **Vite + React + TypeScript**, **React Router** for navigation (login / **search profiles** / settings / new vacancies), modular **services** for hh API (`GET /vacancies` with composed query params per profile) and LLM client, **polling orchestration** per enabled profile. State: Context + hooks initially; Redux Toolkit if multi-profile + journal updates become unwieldy.
 
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x (strict), React 18+  
 **Primary Dependencies**: Vite, React, react-router-dom, ESLint, Prettier, eslint-config-prettier; optional `@reduxjs/toolkit` + `react-redux`  
-**Storage**: Browser only — `localStorage` / `sessionStorage` for tokens (prefer sessionStorage for access tokens if acceptable UX), resume text, LLM base URL/key (user-provided), per-subscription monitoring flags, polling interval, sound toggle; no app backend DB  
+**Storage**: Browser only — `localStorage` / `sessionStorage` for tokens (prefer sessionStorage for access tokens if acceptable UX), resume text, LLM settings, **vacancy search profiles**, **per-profile monitoring flags**, **Markdown journal strings per profile**, poll snapshots (**per profile**), polling interval, sound toggle; no app backend DB  
 **Testing**: Recommended stack Vitest + Testing Library (align with Vite). **Initial `tasks.md` omits automated test tasks** because the feature spec did not request TDD; add Vitest in Setup/Polish when you want CI-quality coverage (see tasks Notes + T030).  
 **Target Platform**: Modern evergreen desktop browsers (Chrome, Firefox, Edge); mobile browsers explicitly out of scope per spec assumptions  
 **Project Type**: Web SPA (frontend-only)  
 **Performance Goals**: Meet spec SC-004/SC-005/SC-007 time-to-feedback targets under typical connectivity; tolerate SC-002 timer slack in background tabs  
 **Constraints**: FR-011 local-only secrets; hh.ru rate limits and OAuth/API surface as documented; SPA exposes LLM API key in runtime memory/localStorage — mitigated by user education (see research)  
-**Scale/Scope**: Single user, single tab session focus; tens of subscriptions and hundreds of vacancy rows reasonable upper bound for UI lists  
+**Scale/Scope**: Single user, single tab session focus; **several tracked search profiles** (single-digit to low tens) and hundreds of vacancy rows per journal reasonable upper bound for UI lists  
 
 ## Constitution Check
 
@@ -62,7 +66,7 @@ src/
 ├── components/               # shared UI
 ├── features/
 │   ├── auth/
-│   ├── subscriptions/
+│   ├── vacancy-searches/    # CRUD profiles, filters UI (replaces subscriptions-centric flow)
 │   ├── polling/
 │   ├── vacancies/
 │   └── settings/
@@ -89,6 +93,10 @@ tests/
 
 | Phase | Focus |
 |-------|--------|
-| 0 | [research.md](./research.md) — hh OAuth/PKCE, API capabilities, polling & LLM key risks |
-| 1 | [data-model.md](./data-model.md), [contracts/](./contracts/), [quickstart.md](./quickstart.md) |
-| 2 | `/speckit-tasks` — actionable tasks.md |
+| 0 | [research.md](./research.md) — hh OAuth/PKCE, **vacancy search** query params vs saved searches, polling & LLM key risks |
+| 1 | [data-model.md](./data-model.md), [contracts/](./contracts/) (incl. journal format), [quickstart.md](./quickstart.md) |
+| 2 | `/speckit-tasks` — actionable tasks.md; **implementation wave** for profile+journal spec — see tasks revision block |
+
+## Spec revision note (2026-05-01)
+
+The executable product shifts from **hh saved-search subscriptions** to **user-defined filter profiles** plus **Markdown journals**. Existing code paths (`saved_searches`, `subscriptionMonitoring`) are **legacy** relative to the revised [spec.md](./spec.md); a follow-up implementation phase should migrate UI and polling to profiles without breaking FR-011 local-only storage.
