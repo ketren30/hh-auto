@@ -13,9 +13,10 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "baseUrl": { "type": "string", "format": "uri" },
+        "baseUrl": { "type": "string" },
         "apiKey": { "type": "string" },
-        "model": { "type": "string" }
+        "model": { "type": "string" },
+        "folderId": { "type": "string" }
       }
     },
     "subscriptionMonitoring": {
